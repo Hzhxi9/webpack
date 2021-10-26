@@ -1,5 +1,7 @@
 const path = require('path');
+
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -7,14 +9,15 @@ console.log('process.env.NODE_ENV=', process.env.NODE_ENV); // 打印环境变�
 
 const config = {
   // 打包入口地址
-  entry: './src/index.js',
+  entry: './index.js',
 
   // 打包输入地址
   output: {
     // 输出文件名
     filename: 'bundle.js',
     // 输出文件目录
-    path: path.join(__dirname, 'dist'),
+    path: path.join(__dirname, './dist'),
+    clean: true,
   },
 
   // 配置devServer
@@ -26,9 +29,10 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8086,
+    port: 8112,
     // 是否自动打开浏览器
     open: true,
+    hot: true,
   },
   // 配置loader
   module: {
@@ -42,7 +46,29 @@ const config = {
         // use: 对应的loader名称
         // Loader 的执行顺序是固定从后往前，即按 css-loader --> style-loader 的顺序执行
         // postcss-loader: 自动添加 CSS3 部分属性的浏览器前缀
-        use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
+        // use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
+        use: [
+          // 'style-loader',
+          MiniCssExtractPlugin.loader,
+          // 添加 loader
+          'css-loader',
+          'postcss-loader',
+          'sass-loader',
+        ],
+      },
+      {
+        test: /\.(jpe?g|png|gif)$/i,
+        type: 'asset',
+        generator: {
+          // 输出文件位置以及文件名
+          // [ext] 自带 "." 这个与 url-loader 配置不同
+          filename: "[name][hash:8][ext]"
+        },
+        parser: {
+          dataUrlCondition: {
+            maxSize: 50 * 1024 //超过50kb不转 base64
+          }
+        }
       },
     ],
   },
@@ -51,6 +77,10 @@ const config = {
     // 编译html文件, 自动的引入了打包好的 bundle.js
     new HtmlWebpackPlugin({
       template: './public/index.html',
+    }),
+    // 分离样式文件
+    new MiniCssExtractPlugin({
+      filename: '[name].[hash:8].css',
     }),
     // 打包前将打包目录清空
     new CleanWebpackPlugin(),

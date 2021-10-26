@@ -385,3 +385,227 @@ $ npm install webpack webpack-cli -D # 安装到本地依赖
     # 淘宝镜像
     npm i node-sass --sass_binary_site=https://npm.taobao.org/mirrors/node-sass/
     ```
+
+    - 配置
+
+    ```js
+    const config = {
+      // ...
+      module: {
+        rules: [
+          {
+            test: /.css$/,
+            use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
+          },
+        ],
+      },
+    };
+    ```
+
+    11. 分离样式文件
+
+    > 希望可以通过 CSS 文件的形式引入到页面上
+
+    - 安装 mini-css-extract-plugin
+
+    ```shell
+    npm install mini-css-extract-plugin
+    ```
+
+    - 配置
+
+    ```js
+    const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+    const config = {
+      // ...
+      module: {
+        rules: [
+          // ...
+          {
+            test: /\.(s[ac]|c)ss$/i, //匹配所有的 sass/scss/css 文件
+            use: [
+              // 'style-loader',
+              MiniCssExtractPlugin.loader, // 添加 loader
+              'css-loader',
+              'postcss-loader',
+              'sass-loader',
+            ],
+          },
+        ],
+      },
+      plugins: [
+        // ...
+        new MiniCssExtractPlugin({
+          // 添加插件
+          filename: '[name].[hash:8].css',
+        }),
+      ],
+    };
+    ```
+
+    12. 图片和字体文件
+
+    > webpack5 不能使用 file-loader、url-loader
+    > webpack 无法识别图片文件, 需要打包的时候处理一下
+    > 常用的处理图片文件的 Loader 包含:
+    > file-loader: 解决图片引入问题, 并将图片 copy 到指定目录, 默认为 dist
+    > url-loader: 依赖 file-loader, 当图片小于 limit 值的时候, 会将图片转为 base64 编码, 大于 limit 值的时候依然是使用 file-loader 进行拷贝
+    > img-loader: 压缩图片
+
+    - file-loader
+
+      - 安装
+
+      ```shell
+      npm install file-loader -D
+      ```
+
+      - 修改配置
+
+      ```js
+      const config = {
+        // ...
+        modules: {
+          rules: [
+            {
+              // ...
+            },
+            {
+              // 匹配图片文件
+              test: /\.(jpe?g|png|gif|awebp)$/i,
+              // 使用 file-loader
+              // use: ['file-loader'],
+              use: [
+                {
+                  loader: 'file-loader',
+                  options: {
+                    name: '[name][hash:8].[ext]',
+                  },
+                },
+              ],
+            },
+            {
+              loader: 'file-loader',
+              options: {
+                name: '[name][hash:8].[ext]',
+              },
+            },
+          ],
+        },
+      };
+      ```
+
+    - url-loader
+
+      - 安装
+
+      ```shell
+      npm install url-loader -D
+      ```
+
+      - 配置 url-loader
+
+      ```js
+      const config = {
+        //...
+        module: {
+          rules: [
+            {
+              // ...
+            },
+            {
+              test: /\.(jpe?g|png|gif)$/i,
+              use: [
+                {
+                  loader: 'url-loader',
+                  options: {
+                    name: '[name][hash:8].[ext]',
+                    // 文件小于 50k 会转换为 base64，大于则拷贝文件
+                    limit: 50 * 1024,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        // ...
+      };
+      ```
+
+    - 配置字体图标
+
+      ```js
+      const config = {
+        // ...
+        {
+          // 匹配字体文件
+          test: /\.(woff2?|eot|ttf|otf)(\?.*)?$)/i,
+          use: [
+            {
+              loader: 'url-loader',
+              options: {
+                // 体积大于 10KB 打包到 fonts 目录下
+                name: 'fonts/[name][hash:8].[ext]',
+                limit: 10 * 1024
+              }
+            }
+          ]
+        }
+      }
+      ```
+
+    13. 资源模块使用
+
+    > webpack5 新增资源模块(asset module)，允许使用资源文件（字体，图标等）而无需配置额外的 loader。
+
+    > 资源模块支持以下四个配置：
+    >
+    > 1. asset/resource 将资源分割为单独的文件，并导出 url，类似之前的 file-loader 的功能.
+    > 2. asset/inline 将资源导出为 dataUrl 的形式，类似之前的 url-loader 的小于 limit 参数时功能.
+    > 3. asset/source 将资源导出为源码（source code）. 类似的 raw-loader 功能
+    > 4. asset 会根据文件大小来选择使用哪种类型，当文件小于 8 KB（默认） 的时候会使用 asset/inline，否则会使用 asset/resource
+
+    ```js
+    const config = {
+      // ...
+      module: {
+        rules: [
+          // ...
+          {
+            test: /\.(jpe?g|png|gif)$/i,
+            type: 'asset',
+            generator: {
+              // 输出文件位置以及文件名
+              // [ext] 自带 "." 这个与 url-loader 配置不同
+              filename: '[name][hash:8][ext]',
+            },
+            parser: {
+              dataUrlCondition: {
+                maxSize: 50 * 1024, //超过50kb不转 base64
+              },
+            },
+          },
+          {
+            test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,
+            type: 'asset',
+            generator: {
+              // 输出文件位置以及文件名
+              filename: '[name][hash:8][ext]',
+            },
+            parser: {
+              dataUrlCondition: {
+                maxSize: 10 * 1024, // 超过100kb不转 base64
+              },
+            },
+          },
+        ],
+      },
+      // ...
+    };
+    module.exports = (env, argv) => {
+      console.log('argv.mode=', argv.mode); // 打印 mode(模式) 值
+      // 这里可以通过不同的模式修改 config 配置
+      return config;
+    };
+    ```

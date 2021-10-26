@@ -1,4 +1,8 @@
-body {
-    /* background: #000; */
-    /* transform: translateX(-50%); */
+p {
+    width: 200px;
+    height: 200px;
+    display: block;
+    text-align: center;
+    background: url('../assets/images/404.png');
+    background-size: 100% 100%;
 }
