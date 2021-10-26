@@ -1,0 +1,9 @@
+$color: blue;
+
+body{
+    // background-color: #fff;
+    p{
+        color: $color;
+        z-index: 22;
+    }
+}
