@@ -609,3 +609,46 @@ $ npm install webpack webpack-cli -D # 安装到本地依赖
       return config;
     };
     ```
+
+  14. js 兼容性(Babel)
+
+  > 在开发中我们想使用最新的 Js 特性，但是有些新特性的浏览器支持并不是很好，所以 Js 也需要做兼容处理，常见的就是将 ES6 语法转化为 ES5。
+
+  - 安装 Babel
+
+  ```shell
+  npm install babel-loader @babel-core @babel/preset-env -D
+  ```
+
+      - babel-loader 使用 Babel 加载 ES2015+ 代码并将其转换为 ES5
+      - @babel/core Babel 编译的核心包
+      - @babel/preset-env Babel 编译的预设，可以理解为 Babel 插件的超集
+
+  - 配置 Babel 预设
+
+  ```js
+  const config = {
+    entry: './src/index.js',
+    output: {
+      filename: 'bundle.js',
+      path: path.join(__dirname, 'dist'),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.js$/i,
+          use: [
+            {
+              loader: 'babel-loader',
+              options: {
+                preset: [
+                  "@babel/preset-env"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  };
+  ```
