@@ -1,6 +1,7 @@
 import './src/index.css';
 import './src/main.scss';
 
+import './assets/fonts/iconfont.css';
 import logo from './assets/images/404.png';
 
 const img = new Image();

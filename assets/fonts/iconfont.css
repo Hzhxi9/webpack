@@ -1,0 +1,123 @@
+@font-face {
+  font-family: "custom-icon"; /* Project id 2507746 */
+  src: url('iconfont.woff2?t=1635298431580') format('woff2'),
+       url('iconfont.woff?t=1635298431580') format('woff'),
+       url('iconfont.ttf?t=1635298431580') format('truetype');
+}
+
+.custom-icon {
+  font-family: "custom-icon" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-icon-youji:before {
+  content: "\e61a";
+}
+
+.custom-icon-shangmenfuwu-mian:before {
+  content: "\e61b";
+}
+
+.custom-icon-shangmenfuwu-xian:before {
+  content: "\e618";
+}
+
+.custom-icon-shenhe:before {
+  content: "\e619";
+}
+
+.custom-icon-bofang:before {
+  content: "\e615";
+}
+
+.custom-icon-juli:before {
+  content: "\e616";
+}
+
+.custom-icon-swt-icon-didichuhang:before {
+  content: "\e617";
+}
+
+.custom-icon-douyin:before {
+  content: "\e614";
+}
+
+.custom-icon-jinbi:before {
+  content: "\e613";
+}
+
+.custom-icon-shaixuan1:before {
+  content: "\e612";
+}
+
+.custom-icon-taipingyangbaoxian:before {
+  content: "\e611";
+}
+
+.custom-icon-jia:before {
+  content: "\e610";
+}
+
+.custom-icon-weixin:before {
+  content: "\e60f";
+}
+
+.custom-icon-shuru_tianxie:before {
+  content: "\e60e";
+}
+
+.custom-icon-shunfengsudishunfengkuaidi:before {
+  content: "\e60d";
+}
+
+.custom-icon-xiala2:before {
+  content: "\e60c";
+}
+
+.custom-icon-fuzhi:before {
+  content: "\e60b";
+}
+
+.custom-icon-shaixuan:before {
+  content: "\e60a";
+}
+
+.custom-icon-wenhao:before {
+  content: "\e609";
+}
+
+.custom-icon-dizhi:before {
+  content: "\e608";
+}
+
+.custom-icon-shijian:before {
+  content: "\e605";
+}
+
+.custom-icon-dingwei:before {
+  content: "\e606";
+}
+
+.custom-icon-dianhua:before {
+  content: "\e607";
+}
+
+.custom-icon-shangdian:before {
+  content: "\e602";
+}
+
+.custom-icon-zhongguoyinhang:before {
+  content: "\e603";
+}
+
+.custom-icon-zizhinengli:before {
+  content: "\e604";
+}
+
+.custom-icon-jintiaoduidie:before {
+  content: "\e601";
+}
+
