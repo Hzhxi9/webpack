@@ -892,3 +892,152 @@ const config = {
     - 给配置加上 publicPath: './'
 
   - **注意: 在 webpack5.x 中为了使用费时分析去对插件进行降级或者修改配置写法是非常不划算的，这里因为演示需要，我后面会继续使用，但是在平时开发中，建议还是不要使用。**
+
+2. 优化 resolve 配置
+
+- alias
+
+  alias 用的创建 import 或 require 的别名，用来简化模块引用，项目中基本都需要进行配置。
+
+  ```js
+  const path = require('path');
+
+  // 路径处理方法
+  function resolve(dir) {
+    return path.join(__dirname, dir);
+  }
+  const config = {
+    // ...
+    resolve: {
+      // 配置别名
+      alias: {
+        '~': resolve('src'),
+        '@': resolve('src'),
+        components: resolve('src/components'),
+      },
+    },
+  };
+  ```
+
+  ```js
+  // 在项目中
+  // 使用 src 别名 ~
+  import '~/fonts/iconfont.css';
+
+  // 使用 src 别名 @
+  import '@/fonts/iconfont.css';
+
+  // 使用 components 别名
+  import footer from 'components/footer';
+  ```
+
+- extensions
+
+webpack 默认配置
+
+```js
+const config = {
+  //...
+  resolve: {
+    extensions: ['.js', '.json', '.wasm'],
+  },
+};
+```
+
+如果用户引入模块时不带扩展名, 例如
+
+```js
+import file from '../path/to/file';
+```
+
+那么 webpack 就会按照 extensions 配置的数组从左往右的顺序去尝试解析模块
+
+需要注意:
+
+- 高频文件后缀名放前面
+- 手动配置后, 默认配置会被覆盖
+
+如果想暴露默认配置, 可以用`...`扩展运算符代表默认配置, 例如
+
+```js
+const config = {
+  // ...
+  resolve: {
+    extensions: ['.ts', '...'],
+  },
+};
+```
+
+- modules
+
+告诉 webpack 解析模块时应该搜索的目录, 常见配置如下:
+
+```js
+const path = require('path');
+
+// 路径处理方法
+function resolve(dir) {
+  return path.join(__dirname, dir);
+}
+
+const config = {
+  // ...
+  resolve: {
+    // 告诉 webpack 优先 src 目录下查找需要解析的文件，会大大节省查找时间
+    modules: [resolve('src'), 'node_modules'],
+  },
+};
+```
+
+- resolveLoader
+
+  resolveLoader 与上面的 resolve 对象的属性集合相同， 但仅用于解析 webpack 的 loader 包。
+
+  一般情况下保持默认配置就可以了，但如果你有自定义的 Loader 就需要配置一下，不配可能会因为找不到 loader 报错
+
+  - 例如在 loader 文件夹下, 有自定义 loader
+
+    ```js
+    const path = require('path');
+
+    // 路径处理方法
+    function resolve(dir) {
+      return path.join(__dirname, dir);
+    }
+
+    const config = {
+      // ...
+      resolveLoader: {
+        modules: ['node_modules', resolve('loader')],
+      },
+    };
+    ```
+
+- externals
+
+> externals 配置选项提供了「从输出的 bundle 中排除依赖」的方法。
+> 此功能通常对 library 开发人员来说是最有用的，然而也会有各种各样的应用程序用到它。
+> 我们可以用这样的方法来剥离不需要改动的一些依赖，大大节省打包构建的时间。
+
+例如: 从 CDN 引入 jQuery，而不是把它打包
+
+```html
+<!-- 引入链接 -->
+<script src="https://code.jquery.com/jquery-3.1.0.js" integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk=" crossorigin="anonymous"></script>
+```
+
+```js
+// 配置externals
+const config = {
+  // ...
+  externals: {
+    jquery: 'jQuery',
+  },
+};
+```
+
+```js
+// 使用jQuery
+import $ from 'jquery';
+$('.element').animate(/***/);
+```
