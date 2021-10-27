@@ -714,3 +714,148 @@ $ npm install webpack webpack-cli -D # 安装到本地依赖
       ],
     };
     ```
+
+四、 SourceMap 配置选择
+
+> SourceMap 是一种映射关系，当项目运行后，如果出现错误，我们可以利用 SourceMap 反向定位到源码位置
+
+1. 配置
+
+```js
+const config = {
+  devtool: 'source-map',
+};
+```
+
+2. 除了 source-map 这种类之外, 还有很多种类型可以用
+
+   - eval
+   - eval-source-map
+   - cheap-source-map
+   - inline-source-map
+   - cheap-module-source-map
+   - inline-cheap-source-map
+   - cheap-module-eval-source-map
+   - inline-cheap-module-source-map
+   - hidden-source-map
+   - nosources-source-map
+
+3. 配置项的差异
+
+   - eval 模式
+
+     - 生成代码通过 eval 执行
+     - 源代码位置通过@sourceURL 注明
+     - 无法定位到错误位置
+     - 不用生成 SourceMap 文件, 只能定位到某个文件
+
+   - source-map 模式
+
+     - 生成了对应的 SourceMap 文件, 打包速度慢
+     - 在源代码中定位到错误所在行列信息
+
+   - eval-source-map 模式
+
+     - 生成代码通过 eval 执行
+     - 包含 dataURL 形式的 SourceMap 文件
+     - 可以在编译后的代码中定位到错误所在行列信息
+     - 生成 dataURL 形式的 SourceMap, 打包速度慢
+
+   - eval-cheap-source-map 模式
+
+     - 生成代码通过 eval 执行
+     - 包含 dataURL 形式的 sourceMap 文件
+     - 可以在编译后的代码中定位到错误所在行信息
+     - 不需要定位列信息, 打包速度较快
+
+   - eval-cheap-module-source-map 模式
+
+     - 生成代码通过 eval 执行
+     - 包含 dataURL 形式的 SourceMap 文件
+     - 可以在编译后的代码中定位到错误所在行信息
+     - 不需要定位列信息, 打包速度较快
+     - 在源代码中定位到错误所在行信息
+
+   - inline-source-map 模式
+
+     - 通过 dataURL 的形式引入 sourceMap 文件
+     - 余下和 source-map 一样
+
+   - hidden-source-map 模式
+
+     - 看不到 SourceMap 效果, 但是生成了 SourceMap 文件
+
+   - nosource-source-map 模式
+
+     - 能看到错误出现的位置
+     - 但是没有办法显示对应的源码
+
+4. 总结
+
+| devtool                      | build | rebuild     | 显示代码 | SourceMap   | 描述           |
+| ---------------------------- | ----- | ----------- | -------- | ----------- | -------------- |
+| (none)                       | 很快  | 很快        | 无       | 无          | 无法定位错误   |
+| eval                         | 快    | 很快(cache) | 编译后   | 无          | 定位到文件     |
+| source-map                   | 很慢  | 很慢        | 源代码   | 有          | 定位到行列     |
+| eval-source-map              | 很慢  | 一般(cache) | 编译后   | 有(dataURL) | 定位到行列     |
+| eval-cheap-source-map        | 一般  | 快(cache)   | 编译后   | 有(dataURL) | 定位到行       |
+| eval-cheap-module-source-map | 慢    | 快(cache)   | 源代码   | 有(dataURL) | 定位到行       |
+| inline-source-map            | 很慢  | 很慢        | 源代码   | 有(dataURL) | 定位到行列     |
+| hidden-source-map            | 很慢  | 很慢        | 源代码   | 有          | 无法定位到错误 |
+| nosource-source-map          | 很慢  | 很慢        | 源代码   | 无          | 定位到文件     |
+
+- 对照一下校验规则 `^(inline-|hidden-|eval-)?(nosources-)?(cheap-(module-)?)?source-map$ `分析一下关键字
+
+| 关键字    | 描述                                                    |
+| --------- | ------------------------------------------------------- |
+| inline    | 代码内通过 dataURL 形式引入 sourceMap                   |
+| hidden    | 生成 SourceMap 文件，但不使用                           |
+| eval      | eval(...) 形式执行代码, 通过 dataURL 形式引入 SourceMap |
+| nosources | 不生成 SourceMap                                        |
+| cheap     | 只需要定位行信息, 不需要列信息                          |
+| module    | 展示源代码中的错误位置                                  |
+
+5. 推荐配置
+
+- 本地开发
+
+  推荐: eval-cheap-module-source-map
+
+  理由:
+
+      - 本地开发首次打包慢点没关系，因为 eval 缓存的原因，rebuild 会很快
+      - 开发中，我们每行代码不会写的太长，只需要定位到行就行，所以加上 cheap
+      - 我们希望能够找到源代码的错误，而不是打包后的，所以需要加上 modele
+
+- 生产环境
+
+  推荐: (none)
+
+  理由:
+
+      - 就是不想别人看到我的源代码
+
+五、 三种 hash 值
+
+> Webpack 文件指纹策略是将文件名后面加上 hash 值
+> 特别在使用 CDN 的时候，缓存是它的特点与优势，但如果打包的文件名，没有 hash 后缀的话，你肯定会被缓存折磨的够呛
+
+例如在基础配置中用到的 `filename: "[name][hash:8][ext]"`
+
+这里里面[]包起来的, 就叫占位。
+
+| 占位符      | 解释                       |
+| ----------- | -------------------------- |
+| ext         | 文件后缀名                 |
+| name        | 文件名                     |
+| path        | 文件相对路径               |
+| folder      | 文件所在文件夹             |
+| hash        | 每次构建生成的唯一 hash 值 |
+| chunkhash   | 根据 chunk 生成的 hash 值  |
+| contenthash | 根据文件内容生成的 hash 值 |
+
+- 关于 hash、chunkhash、contenthash
+
+  - hash: 任何一个文件改动，整个项目的构建 hash 值都会改变
+  - chunkhash: 文件的改动只会影响其所在 chunk 的 hash 值
+  - contenthash: 每个文件都有单独的 hash 值, 文件的改动之后影响自身的 hash 值
