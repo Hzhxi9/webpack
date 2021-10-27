@@ -20,6 +20,9 @@ const config = {
     clean: true,
   },
 
+  // 配置 sourceMap
+  devtool: 'source-map',
+
   // 配置devServer
   devServer: {
     // 静态文件目录
