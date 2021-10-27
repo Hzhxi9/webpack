@@ -57,18 +57,24 @@ const config = {
         ],
       },
       {
+        /**webpack5 内置了资源处理模块，file-loader 和 url-loader 都可以不用安装 */
         test: /\.(jpe?g|png|gif)$/i,
         type: 'asset',
         generator: {
           // 输出文件位置以及文件名
           // [ext] 自带 "." 这个与 url-loader 配置不同
-          filename: "[name][hash:8][ext]"
+          filename: '[name][hash:8][ext]',
         },
         parser: {
           dataUrlCondition: {
-            maxSize: 50 * 1024 //超过50kb不转 base64
-          }
-        }
+            maxSize: 50 * 1024, //超过50kb不转 base64
+          },
+        },
+      },
+      {
+        // 配置js兼容性 babel
+        test: /\.js$/i,
+        use: ['babel-loader'],
       },
     ],
   },

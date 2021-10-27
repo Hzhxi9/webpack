@@ -641,14 +641,76 @@ $ npm install webpack webpack-cli -D # 安装到本地依赖
             {
               loader: 'babel-loader',
               options: {
-                preset: [
-                  "@babel/preset-env"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
+                preset: ['@babel/preset-env'],
+              },
+            },
+          ],
+        },
+      ],
+    },
   };
   ```
+
+  - 为了避免 webpack.config.js 太臃肿, 建议将 Babel 配置文件提取出来
+
+  ```js
+  // 根目录新增 .babelrc.js
+  module.exports = {
+    presets: [
+      [
+        '@babel/preset-env',
+        {
+          // useBuiltIns: false; 默认值, 无视浏览器兼容配置, 引入所有polyfill
+          // useBuildIns: entry; 根据配置的浏览器兼容, 引入浏览器不兼容的polyfill
+          // useBuildIns: usage; 会根据配置的浏览器兼容, 以及你代码中用到API来进行polyfill, 实现了按需添加
+          useBuildIns: 'entry',
+          corejs: '3.9.1',
+          target: {
+            chrome: '58',
+            ie: '11',
+          },
+        },
+      ],
+    ],
+  };
+  ```
+
+  - 常见 Babel 插件
+
+    - @babel/preset-flow
+    - @babel/preset-react
+    - @babel/preset-typescript
+
+  - 配置 Babel 插件
+
+    对于正在提案中, 还未进入 ECMA 规范中的新特性, Babel 是无法进行处理的, 必须要安装对应的插件
+
+    - @babel/plugin-proposal-decorators
+    - @babel/plugin-proposal-class-properties
+
+    - 安装
+
+    ```shell
+    npm install babel/plugin-proposal-decorators @babel/plugin-proposal-class-properties -D
+    ```
+
+    ```js
+    // 对应新增装饰器的使用 .babelrc.js
+    module.exports = {
+      presets: [
+        '@babel/preset-env',
+        {
+          useBuildIns: 'entry',
+          corejs: '3.9.1',
+          target: {
+            chrome: '58',
+            ie: '11',
+          },
+        },
+      ],
+      plugins: [
+        ['@babel/plugin-proposal-decorators', { legacy: true }],
+        ['@babel/plugin-proposal-class-properties', { loose: true }],
+      ],
+    };
+    ```
