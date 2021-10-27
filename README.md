@@ -1041,3 +1041,236 @@ const config = {
 import $ from 'jquery';
 $('.element').animate(/***/);
 ```
+
+3. 缩小范围
+
+在配置 loader 的时候，我们需要更精确的去指定 loader 的作用目录或者需要排除的目录，通过使用 include 和 exclude 两个配置项，可以实现这个功能，常见的例如：
+
+- include: 符合条件的模块进行解析
+- exclude: 排除符合条件的模块, 不解析(优先级更高)
+
+```js
+// 配置babel
+const path = require('path');
+
+const config = {
+  // ...
+  module: {
+    noParse: /jquery|lodash/,
+    rules: [
+      {
+        test: /\.js$/i,
+        include: resolve('src'),
+        exclude: /node_modules/,
+        use: ['babel-loader'],
+      },
+    ],
+  },
+};
+```
+
+4. noParse
+
+- 不需要解析依赖的第三方大型类库等，可以通过这个字段进行配置，以提高构建速度
+- 使用 noParse 进行忽略的模块文件中不会解析 import、require 等语法
+
+```js
+const config = {
+  // ...
+  module: {
+    noParse: /jquery|lodash/,
+    rules: [...]
+  }
+}
+```
+
+5. IgnorePlugin
+
+防止在 import 或 require 调用时, 生成以下正则表达匹配的模块
+
+- requestRegExp 匹配(test)资源请求路径的正则表达式。
+- contextRegExp 匹配(test)资源上下文（目录）的正则表达式。
+
+```js
+new webpack.IgnorePlugin({ requestRegExp, contextRegExp });
+```
+
+```shell
+npm i moment -S
+```
+
+```js
+const config = {
+  // ...
+  plugins: [
+    //配置插件, 目的是将插件中的非中文语音排除掉，这样就可以大大节省打包的体积了
+    new webpack.IgnorePlugin({
+      requestRegExp: /^\.\/locale$/,
+      contextRegExp: /moment$/,
+    }),
+  ],
+};
+```
+
+6. 多进程配置
+
+> 注意：实际上在小型项目中，开启多进程打包反而会增加时间成本，因为启动进程和进程间通信都会有一定开销。
+
+- thread-loader
+
+  配置在 thread-loader 之后的 loader 都会在一个单独的 worker 池（worker pool）中运行
+
+  - 安装
+
+    ```shell
+    npm i thread-loader -D
+    ```
+
+  - 配置
+
+    ```js
+    const path = require('path');
+
+    function resolve(dir) {
+      return path.join(__dirname, dir);
+    }
+    const config = {
+      // ...
+      modules: {
+        noParse: /jquery|lodash/,
+        rules: [
+          {
+            test: /\.js$/i,
+            include: resolve('src'),
+            exclude: /node_modules/,
+            use: [
+              {
+                // 开启多线程
+                loader: 'thread-loader',
+                options: {
+                  worker: 3,
+                },
+              },
+              'babel-loader',
+            ],
+          },
+        ],
+      },
+    };
+    ```
+
+- happypack 同样为开启多进程打包的工具，webpack5 已弃用。
+
+7. 利用缓存
+
+利用缓存可以大幅提升重复构建的速度
+
+- babel-loader 开启缓存
+
+  - babel 在转译 js 过程中时间开销比价大，将 babel-loader 的执行结果缓存起来，重新打包的时候，直接读取缓存
+  - 缓存位置： node_modules/.cache/babel-loader
+
+```js
+const config = {
+  module: {
+    noParse: /jquery|lodash/,
+    rules: [
+      {
+        test: /\.js$/i,
+        include: resolve('src'),
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true, //启用缓存
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+- cache-loader
+
+  - 缓存一些性能开销比较大的 loader 的处理结果
+  - 缓存位置：node_modules/.cache/cache-loader
+
+```shell
+npm install cache-loader -D
+```
+
+```js
+const config = {
+  module: {
+    //...
+    rules: [
+      {
+        test: /\.(s[ac]|c)ss$/i, // 匹配所有sass、scss、css文件
+        use: [MiniCssExtractPlugin.loader, 'cache-loader', 'css-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
+      },
+    ],
+  },
+};
+```
+
+- hard-source-webpack-plugin
+
+  > 提供了中间缓存，重复构建时间大约可以减少 80%，但是在 webpack5 中已经内置了模块缓存，不需要再使用此插件
+
+- dll
+
+  > 在 webpack5.x 中已经不建议使用这种方式进行模块缓存，因为其已经内置了更好体验的 cache 方法
+
+- cache 持久化缓存
+
+  通过配置 cache 缓存生成的 webpack 模块和 chunk, 来改善构建速度
+
+  ```js
+  const config = {
+    cache: {
+      type: 'filesystem',
+    },
+  };
+  ```
+
+七、 优化构建结果
+
+1. 构建结果分析
+
+> 借助插件 webpack-bundle-analyzer 我们可以直观的看到打包结果中，文件的体积大小、各模块依赖关系、文件是够重复等问题，极大的方便我们在进行项目优化的时候，进行问题诊断。
+
+- 安装
+
+```shell
+npm i -D webpack-bundle-analyzer
+```
+
+- 配置
+
+```js
+// 引入插件
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+const config = {
+  //...
+  plugin: [
+    // 配置插件
+    new BundleAnalyzerPlugin({
+      // 只想保留数据不想启动 web 服务，加上两个配置，再次执行打包的时候就只会产生 state.json 的文件了
+      // analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
+      // generateStatsFile: true, // 是否生成stats.json文件
+    })
+  ]
+}
+```
+
+- 修改启动命令
+
+```json
+"scripts": {
+  "analyzer": "cross-env NODE_ENV=prod webpack --progress --mode production"
+}
+```

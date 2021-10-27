@@ -1,13 +1,21 @@
 const path = require('path');
+const webpack = require('webpack');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
-// 费时分析
+// 费时分析(在 webpack5.x 中为了使用费时分析去对插件进行降级或者修改配置写法是非常不划算的)
 const smp = new SpeedMeasurePlugin();
+
+/**路径处理方法 */
+function resolve(dir) {
+  return path.join(__dirname, dir);
+}
 
 console.log('process.env.NODE_ENV=', process.env.NODE_ENV); // 打印环境变量
 
@@ -28,6 +36,31 @@ const config = {
   // 配置 sourceMap
   devtool: 'source-map',
 
+  // resolve 优化配置
+  resolve: {
+    // 配置别名
+    alias: {
+      '~': resolve('src'),
+      '@': resolve('src'),
+      components: resolve('src/components'),
+    },
+    /**
+     * 配置文件后缀名, 引入文件可以不带扩展名
+     * webpack 会按照 extensions 配置的数组从左到右的顺序去尝试解析模块
+     * 需要注意:
+     *  1. 高频文件后缀名放前面；
+     *  2. 手动配置后，默认配置会被覆盖
+     *  3. 如果想保留默认配置，可以用 ... 扩展运算符代表默认配置
+     */
+    extensions: ['.js', '.json', '.wasm', '.ts', '...'],
+
+    /**
+     * 告诉 webpack 解析模块时应该搜索的目录
+     * 优先 src 目录下查找需要解析的文件，会大大节省查找时间
+     */
+    modules: [resolve('src'), 'node_modules'],
+  },
+
   // 配置devServer
   devServer: {
     // 静态文件目录
@@ -37,13 +70,25 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8087,
+    port: 8093,
     // 是否自动打开浏览器
     open: true,
     hot: true,
   },
+  /**
+   * cache 持久化缓存
+   * 通过配置 cache 缓存生成的 webpack 模块和 chunk，来改善构建速度。
+   */
+  cache: {
+    type: 'filesystem',
+  },
   // 配置loader
   module: {
+    /**
+     * 不需要解析依赖的第三方大型类库等，可以通过这个字段进行配置，以提高构建速度
+     * 使用 noParse 进行忽略的模块文件中不会解析 import、require 等语法
+     */
+    noParse: /jquery|lodash/,
     rules: [
       {
         // 匹配所有的css文件
@@ -58,6 +103,8 @@ const config = {
         use: [
           // 'style-loader',
           MiniCssExtractPlugin.loader,
+          // 缓存一些性能开销比较大的 loader 的处理结果
+          'cache-loader',
           // 添加 loader
           'css-loader',
           'postcss-loader',
@@ -95,7 +142,28 @@ const config = {
       {
         // 配置js兼容性 babel
         test: /\.js$/i,
-        use: ['babel-loader'],
+        // 缩小范围
+        // 符合条件的模块进行解析
+        include: [resolve('src'), resolve('index.js')],
+        // 排除符合条件的模块，不解析(优先级高)
+        exclude: /node_modules/,
+        use: [
+          {
+            // 开启多进场打包
+            loader: 'thread-loader',
+            options: {
+              worker: 3,
+            },
+          },
+          {
+            // babel-loader 开启缓存
+            loader: 'babel-loader',
+            options: {
+              // 启用缓存
+              cacheDirectory: true,
+            },
+          },
+        ],
       },
     ],
   },
@@ -111,6 +179,23 @@ const config = {
     }),
     // 打包前将打包目录清空
     new CleanWebpackPlugin(),
+    /**
+     * 目的是将插件中的非中文语音排除掉，这样就可以大大节省打包的体积了
+     * 防止在 import 或 require 调用时，生成以下正则表达式匹配的模块：
+     *    requestRegExp 匹配(test)资源请求路径的正则表达式。
+     *    requestRegExp 匹配(test)资源请求路径的正则表达式。
+     */
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^\.\/locale$/,
+      contextRegExp: /moment$/,
+    }),
+    /**
+     * 构建结果分析
+     */
+    new BundleAnalyzerPlugin({
+      // analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
+      // generateStatsFile: true, // 是否生成stats.json文件
+    }),
   ],
 };
 
