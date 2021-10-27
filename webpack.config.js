@@ -4,6 +4,10 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const PurgecssWebpackPlugin = require('purgecss-webpack-plugin');
+const glob = require('glob'); // 文件匹配模式
 
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -16,6 +20,10 @@ const smp = new SpeedMeasurePlugin();
 function resolve(dir) {
   return path.join(__dirname, dir);
 }
+
+const PATHS = {
+  src: resolve('src'),
+};
 
 console.log('process.env.NODE_ENV=', process.env.NODE_ENV); // 打印环境变量
 
@@ -82,6 +90,17 @@ const config = {
   cache: {
     type: 'filesystem',
   },
+
+  optimization: {
+    minimize: true,
+    minimizer: [
+      // 添加css压缩配置
+      new OptimizeCssAssetsPlugin({}),
+      // 压缩js
+      new TerserPlugin({}),
+    ],
+  },
+
   // 配置loader
   module: {
     /**
@@ -195,6 +214,9 @@ const config = {
     new BundleAnalyzerPlugin({
       // analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
       // generateStatsFile: true, // 是否生成stats.json文件
+    }),
+    new PurgecssPlugin({
+      paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
     }),
   ],
 };

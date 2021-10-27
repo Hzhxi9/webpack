@@ -1262,9 +1262,9 @@ const config = {
       // 只想保留数据不想启动 web 服务，加上两个配置，再次执行打包的时候就只会产生 state.json 的文件了
       // analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
       // generateStatsFile: true, // 是否生成stats.json文件
-    })
-  ]
-}
+    }),
+  ],
+};
 ```
 
 - 修改启动命令
@@ -1274,3 +1274,114 @@ const config = {
   "analyzer": "cross-env NODE_ENV=prod webpack --progress --mode production"
 }
 ```
+
+2. 压缩 CSS
+
+- 安装 optimize-css-assets-webpack-plugin
+
+```shell
+npm install -D optimize-css-assets-webpack-plugin
+```
+
+- 修改 webpack.config.js 配置
+
+```js
+// 压缩CSS
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+
+const config = {
+  // ...
+  optimization: {
+    minimize: true,
+    minimizer: {
+      // 添加CSS压缩配置
+      new OptimizeCssAssetsPlugin({})
+    },
+  },
+};
+```
+
+3. 压缩 JS
+
+> 在生成环境下打包默认会开启 js 压缩，但是当我们手动配置 optimization 选项之后，就不再默认对 js 进行压缩，需要我们手动去配置。
+
+因为 webpack5 内置了 terser-webpack-plugin 插件，所以我们不需重复安装，直接引用就可以了，具体配置如下
+
+```js
+const TerserPlugin = require('terser-webpack-plugin');
+
+const config = {
+  // ...
+  optimization: {
+    minimize: true, // 开启最小化
+    minister: [new TerserPlugin({})],
+  },
+};
+```
+
+4. 清楚无用的 CSS
+
+purgecss-webpack-plugin 会单独提取 css 并清除用不到的 CSS
+
+- 安装插件
+
+```shell
+npm i -D purgecss-webpack-plugin
+```
+
+```js
+const PurgecssWebpackPlugin = require('purgecss-webpack-plugin');
+const glob = require('glob'); // 文件匹配模式
+
+function resolve(dir) {
+  return path.join(__dirname, dir);
+}
+
+const PATHS = {
+  src: resolve('src'),
+};
+
+const config = {
+  plugins: [
+    new PurgecssPlugin({
+      path: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
+    }),
+  ],
+};
+```
+
+5. Tree-shaking
+
+> Tree-shaking 作用是剔除没有使用的代码，以降低包的体积
+
+webpack 默认支持，需要在 .bablerc 里面设置 model：false，即可在生产环境下默认开启
+
+```js
+module.exports = {
+  presets: [
+    [
+      '@babel/preset-env',
+      {
+        module: false,
+        useBuiltIns: 'entry',
+        corejs: '3.9.1',
+        targets: {
+          chrome: '58',
+          ie: '11',
+        },
+      },
+    ],
+  ],
+  plugins: [
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
+    ['@babel/plugin-proposal-class-properties', { loose: true }],
+  ],
+};
+```
+
+6. Scope Hoisting
+
+cope Hoisting 即作用域提升，原理是将多个模块放在同一个作用域下，并重命名防止命名冲突，通过这种方式可以减少函数声明和内存开销。
+
+- webpack 默认支持，在生产环境下默认开启
+- 只支持 es6 代码
