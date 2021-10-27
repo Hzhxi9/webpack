@@ -2,8 +2,12 @@ const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
+// 费时分析
+const smp = new SpeedMeasurePlugin();
 
 console.log('process.env.NODE_ENV=', process.env.NODE_ENV); // 打印环境变量
 
@@ -18,6 +22,7 @@ const config = {
     // 输出文件目录
     path: path.join(__dirname, './dist'),
     clean: true,
+    // publicPath: './'
   },
 
   // 配置 sourceMap
@@ -32,7 +37,7 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8112,
+    port: 8087,
     // 是否自动打开浏览器
     open: true,
     hot: true,
@@ -113,5 +118,5 @@ module.exports = (env, argv) => {
   // 打印 mode(模式) 值
   console.log('argv=', argv.mode);
   // 这里可以通过不同的模式修改 config 配置
-  return config;
+  return smp.wrap(config);
 };

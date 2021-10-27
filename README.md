@@ -859,3 +859,36 @@ const config = {
   - hash: 任何一个文件改动，整个项目的构建 hash 值都会改变
   - chunkhash: 文件的改动只会影响其所在 chunk 的 hash 值
   - contenthash: 每个文件都有单独的 hash 值, 文件的改动之后影响自身的 hash 值
+
+六、 Webpack 进阶
+
+1. 优化构建速度
+
+- 构建费时分析(插件: speed-measure-webpack-plugin)
+
+  ```shell
+  npm install speed-measure-webpack-plugin -D
+  ```
+
+  ```js
+  // 费时分析
+  const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+  const smp = new SpeedMeasurePlugin();
+
+  const config = {
+    // ...
+  };
+
+  module.exports = (env, argv) => {
+    return smp.wrap(config);
+  };
+  ```
+
+  - 使用这个插件的弊端: 有些 Loader 或者 Plugin 新版本会不兼容，需要进行降级处理
+
+  - 解决:
+
+    - mini-css-extract-plugin 进行一下降级处理: ^2.1.0 -> 1.3.6
+    - 给配置加上 publicPath: './'
+
+  - **注意: 在 webpack5.x 中为了使用费时分析去对插件进行降级或者修改配置写法是非常不划算的，这里因为演示需要，我后面会继续使用，但是在平时开发中，建议还是不要使用。**
