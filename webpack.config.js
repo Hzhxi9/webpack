@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 const PurgecssWebpackPlugin = require('purgecss-webpack-plugin');
 const glob = require('glob'); // 文件匹配模式
 
@@ -79,7 +80,7 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8098,
+    port: 8097,
     // 是否自动打开浏览器
     open: true,
     hot: true,
@@ -245,6 +246,14 @@ const config = {
     new BundleAnalyzerPlugin({
       analyzerMode: 'disabled', // 不启动展示打包报告的http服务器
       generateStatsFile: true, // 是否生成stats.json文件
+    }),
+    new CompressionPlugin({
+      filename: '[path].gz[query]',
+      algorithm: 'gzip',
+      test: /\.(js|css)$/,
+      threshold: 102400, // 对10K以上的数据进行压缩
+      minRatio: 0.8, // 只有压缩率比这个值小的资源才会被处理
+      deleteOriginalAssets: false, // 是否删除源文件
     }),
     // 清除无用的 CSS
     // new PurgecssWebpackPlugin({

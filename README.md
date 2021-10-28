@@ -1532,3 +1532,33 @@ img.addEventListener('click', () => {
 // 官网示例
 import(/*webpackPreload: true*/ 'ChartingLibrary');
 ```
+
+5. CompressionWebpackPlugin
+
+> 提供带 Content-Encoding 编码的压缩版的资源
+
+- 安装
+
+```shell
+npm install compression-webpack-plugin -D
+```
+
+- 配置
+
+```js
+const CompressionPlugin = require('compression-webpack-plugin');
+
+const config = {
+  // ...
+  plugins: [
+    new CompressionPlugin({
+      filename: '[path].gz[query]', // 一个 {Function} (asset) => asset 函数，接收原资源名（通过 asset 选项）返回新资源名
+      algorithm: 'gzip', // 可以是 (buffer, cb) => cb(buffer) 或者是使用 zlib 里面的算法的 {String}
+      test: new RegExp('\\.(' + productionGzipExtensions.join('|') + ')$'), //匹配文件名
+      threshold: 102400, // 只处理比这个值大的资源。按字节计算 对10K以上的数据进行压缩
+      minRatio: 0.8, // 只有压缩率比这个值小的资源才会被处理
+      deleteOriginalAssets: false, //是否删除源文件
+    }),
+  ],
+};
+```
