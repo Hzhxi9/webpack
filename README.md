@@ -1362,7 +1362,7 @@ module.exports = {
     [
       '@babel/preset-env',
       {
-        module: false,
+        modules: false,
         useBuiltIns: 'entry',
         corejs: '3.9.1',
         targets: {
@@ -1516,7 +1516,7 @@ const config = {
 
 ```js
 img.addEventListener('click', () => {
-  import(/*webpackPrefetch: true**/ './desc').then(({ default: element }) => {
+  import(/*webpackPrefetch: true*/ './desc').then(({ default: element }) => {
     console.log(element);
     document.body.appendChild(element);
   });
@@ -1530,5 +1530,5 @@ img.addEventListener('click', () => {
 
 ```js
 // 官网示例
-import(/*webpackPreload: true**/ 'ChartingLibrary');
+import(/*webpackPreload: true*/ 'ChartingLibrary');
 ```

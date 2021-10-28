@@ -21,3 +21,12 @@ function log(text) {
 
 const test = new MyClass();
 test.logger();
+
+// 按需加载
+img.addEventListener('click', () => {
+  /**prefetch (预获取)：浏览器空闲的时候进行资源的拉取 */
+  import(/*webpackPrefetch: true */ '@/desc').then(({ default: element }) => {
+    console.log(element);
+    document.body.appendChild(element);
+  });
+});

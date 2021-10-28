@@ -35,6 +35,7 @@ const config = {
   output: {
     // 输出文件名
     filename: '[name].js',
+    chunkFilename: '[name].chunk.js',
     // 输出文件目录
     path: path.join(__dirname, './dist'),
     clean: true,
@@ -78,7 +79,7 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8084,
+    port: 8098,
     // 是否自动打开浏览器
     open: true,
     hot: true,
@@ -242,13 +243,13 @@ const config = {
     }),
     /**构建结果分析 */
     new BundleAnalyzerPlugin({
-      analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
+      analyzerMode: 'disabled', // 不启动展示打包报告的http服务器
       generateStatsFile: true, // 是否生成stats.json文件
     }),
     // 清除无用的 CSS
-    new PurgecssWebpackPlugin({
-      paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
-    }),
+    // new PurgecssWebpackPlugin({
+    //   paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
+    // }),
   ],
 };
 
