@@ -1385,3 +1385,150 @@ cope Hoisting 即作用域提升，原理是将多个模块放在同一个作用
 
 - webpack 默认支持，在生产环境下默认开启
 - 只支持 es6 代码
+
+八、优化运行时体验
+
+> 运行时优化的核心就是提升首屏的加载速度，主要的方式就是
+> 降低首屏加载文件体积，首屏不需要的文件进行预加载或者按需加载
+
+1. 入口点分割
+
+配置多个打包入口, 多页打包
+
+2. splitChunk 分包配置
+
+optimization.splitChunk 是基于 splitChunksPlugin 插件实现的
+
+默认情况下, 它只会影响到按需加载的 chunks, 因为修改 initial chunk 会影响到项目的 HTML 文件中的脚本标签
+
+webpack 将根据一下条件自动拆分 chunks
+
+- 新的 chunk 可以被共享, 或者模块来自于 node_modules 文件夹
+- 新的 chunk 体积大于 20kb(在进行 min+gz 之前的体积)
+- 当按需加载 chunks, 并行请求的最大数量小于或等于 30
+- 当加载初始化页面时, 并发请求的最大数量小于或等于 30
+
+- 默认配置介绍
+
+```js
+module.exports = {
+  //...
+  optimization: {
+    splitChunk: {
+      chunks: 'async', // 有效值为'all', 'async', ' initial'
+      minSize: 20000, // 生成chunk的最小体积(≈ 20kb)
+      minRemainingSize: 0, // 确保拆分后剩余的最小chunk体积超过限制来避免大小为0的模块
+      minChunks: 1, // 拆分前必须共享模块的最小chunks数
+      maxAsyncRequests: 30, // 最大的按需(异步)加载次数
+      maxInitialRequests: 30, // 打包后的入口文件加载时, 还能同时加载js文件的数量(包括入口文件)
+      enforceSizeThreshold: 50000,
+      // 配置提取模块的方案
+      cacheGroups: {
+        test: /[\/]node_modules[\/]/,
+        priority: -10,
+        reuseExistingChunk: true,
+      },
+      default: {
+        minChunks: 2,
+        priority: -20,
+        reuseExistingChunk: true,
+      },
+    },
+  },
+};
+```
+
+- 项目中使用
+
+```js
+const config = {
+  // ...
+  optimization: {
+    splitChunks: {
+      // 配置提取模块的方案
+      cacheGroups: {
+        default: false,
+        styles: {
+          name: 'styles',
+          test: /\.(s?css|less|sass)$/,
+          chunk: 'all',
+          enforce: true,
+          priority: 10,
+        },
+        common: {
+          name: 'chunk-common',
+          chunks: 'all',
+          minChunks: 2,
+          maxInitialRequests: 5,
+          minSize: 0,
+          priority: 1,
+          enforce: true,
+          reuseExistingChunk: true,
+        },
+        vendors: {
+          name: 'chunk-vendors',
+          test: /[\\/]node_modules[\\/]/,
+          chunks: 'all',
+          priority: 2,
+          enforce: true,
+          reuseExistingChunk: true,
+        },
+        // ...根据不同项目在细化拆分内容
+      },
+    },
+  },
+};
+```
+
+3. 代码懒加载
+
+针对首屏加载不太需要的一些资源, 可以通过懒加载的方式去实现。
+
+- 点击图片给图片加一个描述
+
+  - 新建图片描述信息
+
+    ```js
+    // desc.js
+    const ele = document.createElement('div');
+    ele.innerHTML = '描述';
+    module.exports = ele;
+    ```
+
+    ```js
+    // index.js
+    // 按需加载
+    img.addEventListener('click', () => {
+      import('./desc').then(({ default: element }) => {
+        console.log(element);
+        document.body.appendChild(element);
+      });
+    });
+    ```
+
+4. prefetch 与 preload
+
+上面我们使用异步加载的方式引入图片的描述，但是如果需要异步加载的文件比较大时，在点击的时候去加载也会影响到我们的体验，这个时候我们就可以考虑使用 prefetch 来进行预拉取
+
+- prefetch
+
+> prefetch (预获取)：浏览器空闲的时候进行资源的拉取
+
+```js
+img.addEventListener('click', () => {
+  import(/*webpackPrefetch: true**/ './desc').then(({ default: element }) => {
+    console.log(element);
+    document.body.appendChild(element);
+  });
+});
+```
+
+- preload
+
+> preload (预加载)：提前加载后面会用到的关键资源
+> 因为会提前拉取资源，如果不是特殊需要，谨慎使用
+
+```js
+// 官网示例
+import(/*webpackPreload: true**/ 'ChartingLibrary');
+```

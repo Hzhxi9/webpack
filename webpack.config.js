@@ -34,7 +34,7 @@ const config = {
   // 打包输入地址
   output: {
     // 输出文件名
-    filename: 'bundle.js',
+    filename: '[name].js',
     // 输出文件目录
     path: path.join(__dirname, './dist'),
     clean: true,
@@ -78,7 +78,7 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8093,
+    port: 8084,
     // 是否自动打开浏览器
     open: true,
     hot: true,
@@ -99,6 +99,38 @@ const config = {
       // 压缩js
       new TerserPlugin({}),
     ],
+    // splitChunks 分包配置
+    splitChunks: {
+      cacheGroups: {
+        // 配置提取模块的方案
+        default: false,
+        styles: {
+          name: 'styles',
+          test: /\.(s?css|less|sass)$/,
+          chunks: 'all',
+          enforce: true,
+          priority: 10,
+        },
+        common: {
+          name: 'chunk-common',
+          chunks: 'all', // 有效值为 `all`，`async` 和 `initial`
+          minChunks: 2, // 拆分前必须共享模块的最小 chunks 数。
+          maxInitialRequests: 5, // 打包后的入口文件加载时，还能同时加载js文件的数量（包括入口文件）
+          minSize: 0, // 生成 chunk 的最小体积（≈ 20kb)
+          priority: 1,
+          enforce: true,
+          reuseExistingChunk: true,
+        },
+        vendors: {
+          name: 'chunk-vendors',
+          test: /[\\/]node_modules[\\/]/,
+          chunks: 'all',
+          priority: 2,
+          enforce: true,
+          reuseExistingChunk: true,
+        },
+      },
+    },
   },
 
   // 配置loader
@@ -208,14 +240,13 @@ const config = {
       resourceRegExp: /^\.\/locale$/,
       contextRegExp: /moment$/,
     }),
-    /**
-     * 构建结果分析
-     */
+    /**构建结果分析 */
     new BundleAnalyzerPlugin({
-      // analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
-      // generateStatsFile: true, // 是否生成stats.json文件
+      analyzerMode: 'disabled',  // 不启动展示打包报告的http服务器
+      generateStatsFile: true, // 是否生成stats.json文件
     }),
-    new PurgecssPlugin({
+    // 清除无用的 CSS
+    new PurgecssWebpackPlugin({
       paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
     }),
   ],
