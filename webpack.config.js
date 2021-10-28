@@ -2,7 +2,6 @@ const path = require('path');
 const chalk = require('chalk');
 const webpack = require('webpack');
 
-
 const ProgressBarPlugin = require('progress-bar-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -10,6 +9,7 @@ const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const PurgecssWebpackPlugin = require('purgecss-webpack-plugin');
 const glob = require('glob'); // 文件匹配模式
 
@@ -65,7 +65,7 @@ const config = {
      *  2. 手动配置后，默认配置会被覆盖
      *  3. 如果想保留默认配置，可以用 ... 扩展运算符代表默认配置
      */
-    extensions: ['.js', '.json', '.wasm', '.ts', '...'],
+    extensions: ['.js', '.ts', '.tsx', '.json', '.wasm', '...'],
 
     /**
      * 告诉 webpack 解析模块时应该搜索的目录
@@ -83,7 +83,7 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8096,
+    port: 8093,
     // 是否自动打开浏览器
     open: true,
     // 热更新
@@ -231,6 +231,20 @@ const config = {
           },
         ],
       },
+      {
+        test: /\.tsx?$/,
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              // 只进行语法转换,不进行类型校验,提高构建速度
+              // 指定特定的ts编译配置，为了区分脚本的ts配置
+              configFile: path.resolve(__dirname, './tsconfig.json')
+            },
+          },
+        ],
+        exclude: /node_modules/,
+      },
     ],
   },
   // 配置插件
@@ -272,6 +286,8 @@ const config = {
       minRatio: 0.8, // 只有压缩率比这个值小的资源才会被处理
       deleteOriginalAssets: false, // 是否删除源文件
     }),
+    /**使用插件进行类型校验 */
+    // new ForkTsCheckerWebpackPlugin(),
     // 清除无用的 CSS
     // new PurgecssWebpackPlugin({
     //   paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
