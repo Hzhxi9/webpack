@@ -1,6 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
 
+const chalk = require('chalk');
+const ProgressBarPlugin = require('progress-bar-webpack-plugin');
+
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
@@ -80,9 +83,10 @@ const config = {
     // 是否启动压缩gzip
     compress: true,
     // 端口号
-    port: 8097,
+    port: 8096,
     // 是否自动打开浏览器
     open: true,
+    // 热更新
     hot: true,
   },
   /**
@@ -101,6 +105,10 @@ const config = {
       // 压缩js
       new TerserPlugin({}),
     ],
+    /**
+     * 为运行时代码创建一个额外的 chunk，减少 entry chunk 体积，提高性能
+     */
+    runtimeChunk: true,
     // splitChunks 分包配置
     splitChunks: {
       cacheGroups: {
@@ -137,6 +145,11 @@ const config = {
 
   // 配置loader
   module: {
+    /**
+     * 如果项目不使用 symlinks（例如 npm link 或者 yarn link），
+     * 可以设置 resolve.symlinks: false，减少解析工作量。
+     */
+    // symlinks: false,
     /**
      * 不需要解析依赖的第三方大型类库等，可以通过这个字段进行配置，以提高构建速度
      * 使用 noParse 进行忽略的模块文件中不会解析 import、require 等语法
@@ -222,6 +235,10 @@ const config = {
   },
   // 配置插件
   plugins: [
+    // 编译进度条, 包含内容、进度条、进度百分比、消耗时间
+    new ProgressBarPlugin({
+      format: `:msg [:bar] ${chalk.green.bold(':percent')}(:elapsed s)`,
+    }),
     // 编译html文件, 自动的引入了打包好的 bundle.js
     new HtmlWebpackPlugin({
       template: './public/index.html',
