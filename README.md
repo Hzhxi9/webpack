@@ -1,7 +1,31 @@
 一、 关于 Webpack 的面试题
 
 1. Webpack 配置中用过哪些 Loader ？都有什么作用？
+
+   - MiniCssExtractPlugin.loader: 希望可以通过 CSS 文件的形式引入到页面上, 实现分离样式文件
+   - style-loader: 将处理好的 css 通过 style 标签的形式添加到页面上
+   - css-loader: 处理 css 文件
+   - sass-loader: 处理 sass 文件
+   - postcss-loader: 自动添加 CSS3 部分属性的浏览器前缀
+   - cache-loader: 缓存一些性能开销比较大的 loader 的处理结果
+   - file-loader: 解决图片引入问题, 并将图片 copy 到指定目录, 默认为 dist
+   - url-loader: 依赖 file-loader, 当图片小于 limit 值的时候, 会将图片转为 base64 编码, 大于 limit 值的时候依然是使用 file-loader 进行拷贝
+   - thread-loader: loader 都会在一个单独的 worker 池（worker pool）中运行
+   - babel-loader: 在开发中我们想使用最新的 Js 特性，但是有些新特性的浏览器支持并不是很好，所以 Js 也需要做兼容处理，常见的就是将 ES6 语法转化为 ES5
+   - ts-loader: 处理 ts 文件
+
 2. Webpack 配置中用过哪些 Plugin ？都有什么作用？
+
+   - html-webpack-plugin: 编译 html 文件, 自动的引入了打包好的 bundle.js
+   - mini-css-extract-plugin: 分离样式文件
+   - optimize-css-assets-webpack-plugin: css 压缩
+   - progress-bar-webpack-plugin: 编译进度条, 包含内容、进度条、进度百分比、消耗时间
+   - speed-measure-webpack-plugin: 费时分析
+   - terser-webpack-plugin: 压缩 js
+   - compression-webpack-plugin: 拆包
+   - webpack-bundle-analyze: 构建结果分析
+   - clean-webpack-plugin: 打包前将打包目录清空
+
 3. Loader 和 Plugin 有什么区别？
 4. 如何编写 Loader ? 介绍一下思路？
 5. 如何编写 Plugin ? 介绍一下思路？
